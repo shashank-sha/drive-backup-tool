@@ -12,6 +12,7 @@ A Node.js application that demonstrates:
 - Asynchronous programming with async/await
 - Environment variable management
 - Modular code organization
+- **OAuth Token Generation Tool** (new!)
 
 ## Project Structure
 
@@ -30,9 +31,93 @@ drive-backup-tool/
 │   ├── sheetLogger.js
 │   ├── constants.js
 │   └── index.js
+├── token-generator.html # OAuth Token Generator Tool
 ├── package.json
 └── README.md
 ```
+
+## OAuth Token Generator Tool
+
+The project includes a web-based OAuth token generator (`token-generator.html`) that simplifies the process of creating OAuth tokens for multiple Google accounts.
+
+> **Note**: This token generator is an **optional convenience tool**. The traditional OAuth flow still works automatically when you have credentials files in the `credentials/` folder. The backup tool will handle authentication and token generation automatically during the first run.
+
+### Features
+
+- **Web-based Interface**: Easy-to-use HTML tool that runs in any browser
+- **Multiple Account Support**: Generate tokens for different account types (Sheets logging, Drive uploads)
+- **Automatic Token Exchange**: Handles the complete OAuth flow automatically
+- **Secure Token Storage**: Generates properly formatted token files for the backup tool
+- **Desktop OAuth Support**: Designed specifically for desktop applications
+- **Optional Pre-generation**: Generate tokens before running the backup tool (avoids interactive prompts)
+
+### When to Use the Token Generator
+
+**Use the token generator if you want to:**
+- Pre-generate all tokens before running the backup tool
+- Avoid interactive authentication prompts during backup
+- Generate tokens for multiple accounts in one session
+- Have a visual interface for token management
+
+**Skip the token generator if you prefer:**
+- Let the backup tool handle authentication automatically
+- Use the traditional command-line OAuth flow
+- Generate tokens on-demand during backup execution
+
+### How to Use the Token Generator
+
+1. **Open the Token Generator**:
+   ```bash
+   # Open in your browser
+   open token-generator.html
+   # or double-click the file
+   ```
+
+2. **Upload OAuth Credentials**:
+   - Upload the OAuth credentials JSON file from Google Cloud Console
+   - The tool will extract the client ID and client secret automatically
+
+3. **Choose Account Type**:
+   - **Sheets Logging Account**: For Google Sheets API (one account)
+   - **Upload Account**: For Google Drive API (multiple accounts: account1, account2, etc.)
+
+4. **Complete OAuth Flow**:
+   - Click the authentication button
+   - Follow Google's consent screen
+   - Copy the redirect URL from your browser
+   - Paste it back into the tool
+
+5. **Save Token File**:
+   - Copy the generated token JSON
+   - Save it to the `tokens/` folder with the correct filename:
+     - `sheets-token.json` for Sheets logging
+     - `account1-token.json`, `account2-token.json`, etc. for Drive uploads
+
+### Token File Naming Convention
+
+The token generator creates files with specific names that the backup tool expects:
+
+- **`sheets-token.json`** - For Google Sheets logging (single account)
+- **`account1-token.json`** - For Drive uploads (first account)
+- **`account2-token.json`** - For Drive uploads (second account)
+- **`account3-token.json`** - For Drive uploads (third account)
+- And so on...
+
+### OAuth Client Requirements
+
+For the token generator to work properly:
+
+1. **OAuth Client Type**: Must be set to "Desktop application" in Google Cloud Console
+2. **Redirect URI**: Should be set to `http://localhost` (or left empty for desktop apps)
+3. **Scopes**: The tool automatically requests the correct scopes:
+   - `https://www.googleapis.com/auth/spreadsheets` for Sheets logging
+   - `https://www.googleapis.com/auth/drive.file` for Drive uploads
+
+### Security Notes
+
+- **Keep tokens secure**: Never share or commit token files to version control
+- **Token expiration**: Tokens include refresh tokens for automatic renewal
+- **Multiple accounts**: Each account gets its own token file for isolation
 
 ## Educational Concepts Demonstrated
 
@@ -47,6 +132,7 @@ drive-backup-tool/
    - Google Drive API for file uploads
    - Google Sheets API for logging
    - Permission management
+   - **OAuth Token Generation** (new!)
 
 3. **Node.js Features**
    - ES Modules
@@ -60,6 +146,12 @@ drive-backup-tool/
    - Separation of concerns
    - Error handling patterns
    - Configuration management
+
+5. **Web Development**
+   - HTML/CSS/JavaScript
+   - OAuth 2.0 implementation
+   - Browser-based tools
+   - User interface design
 
 ## Setup (For Learning Purposes)
 
@@ -86,10 +178,20 @@ drive-backup-tool/
 4. Set up Google Cloud Project (for learning OAuth):
    - Create a project in Google Cloud Console
    - Enable Google Drive API and Google Sheets API
-   - Create OAuth 2.0 credentials
+   - Create OAuth 2.0 credentials (Desktop application type)
    - Download credentials to `credentials/` directory
 
-5. Place test files in `input_files/`
+5. **Generate OAuth Tokens** (optional):
+   - **Option A - Use Token Generator** (recommended for convenience):
+     - Open `token-generator.html` in your browser
+     - Upload your OAuth credentials file
+     - Generate tokens for each account you need
+     - Save token files to the `tokens/` folder
+   - **Option B - Let Backup Tool Handle It** (traditional approach):
+     - Skip this step - the backup tool will handle authentication automatically
+     - Tokens will be generated during the first run when prompted
+
+6. Place test files in `input_files/`
 
 ## Usage (Educational Example)
 
@@ -99,7 +201,7 @@ npm start
 
 The application will:
 1. Split files into batches (see `src/batchSplitter.js`)
-2. Authenticate with Google (demonstrating OAuth flow)
+2. Authenticate with Google (using pre-generated tokens or interactive OAuth flow)
 3. Upload batches to Drive (see `src/driveUploader.js`)
 4. Log operations to Google Sheets (see `src/sheetLogger.js`)
 
@@ -121,13 +223,21 @@ The application will:
 - Data formatting
 - Asynchronous operations
 
+### **OAuth Token Generator (`token-generator.html`)**
+- OAuth 2.0 flow implementation
+- Browser-based authentication
+- Token exchange and storage
+- Multi-account management
+- User interface design
+
 ## Important Notes
 
 - This is an educational project
 - Respect Google API quotas and limits
-- Handle credentials securely
+- Handle credentials and tokens securely
 - Monitor storage usage
 - Follow Google's Terms of Service
+- **OAuth tokens should never be shared or committed to version control**
 
 ## Contributing
 

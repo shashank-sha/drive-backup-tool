@@ -27,7 +27,7 @@ async function authorize(credentialsPath, accountLabel) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
   const code = await new Promise(resolve => {
-    rl.question('Enter code from browser: ', answer => {
+    rl.question('Enter code from browser(In case the browser cannot open the url, copy the code parameter from the url): ', answer => {
       rl.close();
       resolve(answer);
     });

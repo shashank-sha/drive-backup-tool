@@ -6,12 +6,23 @@
   "scripts": {
     "start": "node src/index.js"
   },
+  "keywords": [
+    "google-cloud",
+    "oauth",
+    "setup",
+    "automation"
+  ],
+  "author": "Drive Backup Tool",
+  "license": "MIT",
   "dependencies": {
     "googleapis": "^129.0.0",
     "dotenv": "^16.4.5",
     "google-auth-library": "^9.6.3",
     "fs-extra": "^11.2.0",
     "path": "^0.12.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "type": "module"
 } 
