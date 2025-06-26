@@ -11,6 +11,15 @@ const BATCH_SIZE = parseInt(process.env.BATCH_SIZE);
 const RENAME_FILES = process.env.RENAME_INPUT_FILES === 'true';
 const MAX_FILENAME_LENGTH = 100; // Maximum length for filenames
 
+// File extensions to include (comma-separated, default to '*' for all files)
+const ALLOWED_EXTENSIONS = process.env.ALLOWED_EXTENSIONS ? 
+  process.env.ALLOWED_EXTENSIONS.split(',').map(ext => {
+    const trimmed = ext.trim().toLowerCase();
+    // Add dot if not present and not wildcard
+    return trimmed === '*' ? '*' : (trimmed.startsWith('.') ? trimmed : '.' + trimmed);
+  }) : 
+  ['*'];
+
 // ANSI color codes for user-facing errors
 const COLORS = {
   RED: '\x1b[31m',
@@ -30,6 +39,26 @@ class EmptyInputError extends Error {
     super(message);
     this.name = 'EmptyInputError';
   }
+}
+
+/**
+ * Check if a file has an allowed extension
+ * @param {string} filePath - Path to the file
+ * @returns {boolean} True if the file has an allowed extension
+ */
+function hasAllowedExtension(filePath) {
+  // If ALLOWED_EXTENSIONS contains '*', allow all files
+  if (ALLOWED_EXTENSIONS.includes('*')) {
+    return true;
+  }
+  
+  const fileExtension = path.extname(filePath).toLowerCase();
+  const isAllowed = ALLOWED_EXTENSIONS.includes(fileExtension);
+  
+  // Debug logging
+  console.log(`DEBUG: File: ${path.basename(filePath)}, Extension: ${fileExtension}, Allowed: ${isAllowed}, Allowed Extensions: ${ALLOWED_EXTENSIONS.join(', ')}`);
+  
+  return isAllowed;
 }
 
 /**
@@ -220,6 +249,11 @@ function getAllFiles(dir, baseDir = dir) {
       
       files.push(...subFiles);
     } else if (entry.isFile()) {
+      // Check if file has an allowed extension
+      if (!hasAllowedExtension(fullPath)) {
+        continue; // Skip files with disallowed extensions
+      }
+      
       const newName = RENAME_FILES ? 
         generateReadableName(fullPath, baseDir, fileIndex++) : 
         entry.name;
@@ -345,6 +379,14 @@ function listDirectoryContents(dir) {
  */
 async function createBatches(inputDir, batchDir) {
   console.log('\nScanning directories and files...');
+
+  // Log extension filter information
+  if (ALLOWED_EXTENSIONS.includes('*')) {
+    console.log('📁 Processing all file types');
+  } else {
+    console.log(`📁 Processing only files with extensions: ${ALLOWED_EXTENSIONS.join(', ')}`);
+  }
+  
   if(RENAME_FILES)
     console.warn('\nRenaming directories and files...');
   

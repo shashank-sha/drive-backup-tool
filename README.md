@@ -126,13 +126,14 @@ For the token generator to work properly:
    - File size calculation
    - Batch file organization
    - File streaming for uploads
+   - File extension filtering
 
 2. **Google APIs Integration**
    - OAuth 2.0 authentication flow
    - Google Drive API for file uploads
    - Google Sheets API for logging
    - Permission management
-   - **OAuth Token Generation** (new!)
+   - OAuth Token Generation
 
 3. **Node.js Features**
    - ES Modules
@@ -173,6 +174,12 @@ For the token generator to work properly:
    # BATCH_SIZE=15569256448  # 14.5GB in bytes
    # BATCH_SIZE=104857600    # 100MB in bytes
    GOOGLE_SHEET_ID=your_google_sheet_id_here
+   
+   # File extensions to process (comma-separated, default: all files)
+   ALLOWED_EXTENSIONS=*  # Process all file types
+   # ALLOWED_EXTENSIONS=jpg,jpeg,png,gif  # Process only image files
+   # ALLOWED_EXTENSIONS=mp4,avi,mov  # Process only video files
+   # ALLOWED_EXTENSIONS=pdf,doc,docx  # Process only document files
    ```
 
 4. Set up Google Cloud Project (for learning OAuth):
@@ -192,6 +199,41 @@ For the token generator to work properly:
      - Tokens will be generated during the first run when prompted
 
 6. Place test files in `input_files/`
+
+## File Extension Filtering
+
+The tool now supports filtering files by their extensions using the `ALLOWED_EXTENSIONS` environment variable. This feature allows you to process only specific file types, which can be useful for:
+
+- **Selective backups**: Only backup certain file types (e.g., only images or only documents)
+- **Performance optimization**: Skip unwanted file types to reduce processing time
+- **Storage management**: Focus on specific file categories
+
+### Usage Examples
+
+```bash
+# Process all file types (default behavior)
+ALLOWED_EXTENSIONS=*
+
+# Process only image files
+ALLOWED_EXTENSIONS=jpg,jpeg,png,gif,bmp,tiff
+
+# Process only video files
+ALLOWED_EXTENSIONS=mp4,avi,mov,mkv,wmv,flv
+
+# Process only document files
+ALLOWED_EXTENSIONS=pdf,doc,docx,txt,rtf
+
+# Process multiple file types
+ALLOWED_EXTENSIONS=jpg,png,pdf,mp4
+```
+
+### How It Works
+
+- **Extension matching**: File extensions are compared case-insensitively
+- **Default behavior**: If `ALLOWED_EXTENSIONS` is not set or contains `*`, all files are processed
+- **Comma-separated**: Multiple extensions can be specified using commas
+- **Automatic dot handling**: Extensions can be specified with or without dots (e.g., `jpg` or `.jpg` both work)
+- **Logging**: The tool displays which extensions are being processed during execution
 
 ## Usage (Educational Example)
 
