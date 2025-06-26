@@ -1,12 +1,22 @@
 # Node modules
 node_modules/
 
+# Environment variables
+.env
+
 # System files
 .DS_Store
 Thumbs.db
 .localized
 .Spotlight-V100
 .Trashes
+
+# Input files
+input_files/
+
+# Credentials and tokens
+credentials/
+tokens/
 
 # Batches and output
 batches/

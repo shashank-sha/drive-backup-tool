@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Google OAuth Token Generator - Drive Backup Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4285f4;
+            text-align: center;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #4285f4;
+            background-color: #f8f9fa;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .code {
+            background-color: #f1f3f4;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        .button {
+            background-color: #4285f4;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background-color: #3367d6;
+        }
+        .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            background-color: #e8f5e8;
+            border: 1px solid #4caf50;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+        .error {
+            background-color: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info {
+            background-color: #e3f2fd;
+            border: 1px solid #2196f3;
+            color: #1565c0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .file-info {
+            background-color: #f0f8ff;
+            border: 1px solid #87ceeb;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Google OAuth Token Generator</h1>
+        <h2 style="text-align: center; color: #666;">Drive Backup Tool</h2>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> This tool generates OAuth tokens for your Google Drive backup tool. 
+            Keep these tokens secure and never share them publicly.
+        </div>
+
+        <div class="info">
+            <strong>ℹ️ Desktop Application:</strong> This tool is designed for desktop applications. 
+            Make sure your OAuth client is configured as "Desktop application" type in Google Cloud Console.
+        </div>
+
+        <div class="step">
+            <h3>Step 1: Upload OAuth Credentials JSON</h3>
+            <p>Upload the OAuth credentials JSON file you downloaded from Google Cloud Console:</p>
+            <input type="file" id="credentialsFile" accept=".json" onchange="loadCredentials()">
+            <div id="fileInfo" class="file-info"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Choose Account Type</h3>
+            <p>Select whether you want to generate tokens for:</p>
+            <button class="button" onclick="generateToken('sheets')" id="sheetsBtn" disabled>Sheets Logging Account</button>
+            <button class="button" onclick="generateToken('upload')" id="uploadBtn" disabled>Upload Account (account1, account2, etc.)</button>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Authentication</h3>
+            <p>Click the button above and follow the Google OAuth flow. You'll be redirected to Google's consent screen.</p>
+            <div id="authStatus"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Token Result</h3>
+            <div id="tokenResult" class="result">
+                <h4>✅ Token Generated Successfully!</h4>
+                <p><strong>Account Type:</strong> <span id="accountType"></span></p>
+                <p><strong>Access Token:</strong></p>
+                <div class="code" id="accessToken"></div>
+                <p><strong>Refresh Token:</strong></p>
+                <div class="code" id="refreshToken"></div>
+                <p><strong>Expires At:</strong> <span id="expiresAt"></span></p>
+                <p><strong>Token Type:</strong> <span id="tokenType"></span></p>
+                <p><strong>Scope:</strong> <span id="scope"></span></p>
+                <hr>
+                <p><strong>Save this token to your tokens folder as:</strong></p>
+                <div class="code" id="fileName"></div>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Step 5: Save Token File</h3>
+            <p>Copy the token data above and save it to a JSON file in your <code>tokens/</code> folder.</p>
+            <p><strong>File naming convention:</strong></p>
+            <ul>
+                <li><code>sheets-token.json</code> - for Google Sheets logging (one account)</li>
+                <li><code>account1-token.json</code>, <code>account2-token.json</code>, etc. - for Drive uploads (multiple accounts)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Version 2.0 - Fixed client_secret issue
+        console.log('Token Generator v2.0 loaded - client_secret issue fixed');
+        
+        let currentAccountType = '';
+        let batchNumber = 1;
+        let credentials = null;
+
+        function loadCredentials() {
+            const fileInput = document.getElementById('credentialsFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    credentials = JSON.parse(e.target.result);
+                    
+                    console.log('Credentials file loaded:', credentials);
+                    
+                    // Extract client ID
+                    let clientId = '';
+                    let clientSecret = '';
+                    
+                    if (credentials.installed && credentials.installed.client_id) {
+                        clientId = credentials.installed.client_id;
+                        clientSecret = credentials.installed.client_secret || '';
+                    } else if (credentials.client_id) {
+                        clientId = credentials.client_id;
+                        clientSecret = credentials.client_secret || '';
+                    }
+
+                    console.log('Extracted Client ID:', clientId);
+                    console.log('Client Secret found:', !!clientSecret);
+
+                    if (clientId) {
+                        // Store client ID for later use
+                        sessionStorage.setItem('oauth_client_id', clientId);
+                        sessionStorage.setItem('oauth_client_secret', clientSecret);
+                        
+                        // Show file info
+                        const fileInfo = document.getElementById('fileInfo');
+                        fileInfo.style.display = 'block';
+                        fileInfo.innerHTML = `
+                            <strong>✅ Credentials loaded successfully!</strong><br>
+                            <strong>Client ID:</strong> ${clientId}<br>
+                            <strong>Project ID:</strong> ${credentials.installed?.project_id || credentials.project_id || 'N/A'}<br>
+                            <strong>Application Type:</strong> ${credentials.installed ? 'Desktop Application' : 'Web Application'}<br>
+                            <strong>Has Client Secret:</strong> ${clientSecret ? 'Yes' : 'No'}
+                        `;
+
+                        // Enable buttons
+                        document.getElementById('sheetsBtn').disabled = false;
+                        document.getElementById('uploadBtn').disabled = false;
+                    } else {
+                        throw new Error('Client ID not found in credentials file');
+                    }
+                } catch (error) {
+                    alert('Error loading credentials file: ' + error.message);
+                    document.getElementById('fileInfo').style.display = 'none';
+                    document.getElementById('sheetsBtn').disabled = true;
+                    document.getElementById('uploadBtn').disabled = true;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function generateToken(accountType) {
+            const clientId = sessionStorage.getItem('oauth_client_id');
+            
+            if (!clientId) {
+                alert('Please upload your OAuth credentials JSON file first!');
+                return;
+            }
+
+            currentAccountType = accountType;
+            
+            // Set up OAuth configuration
+            const scopes = accountType === 'sheets' 
+                ? ['https://www.googleapis.com/auth/spreadsheets']
+                : ['https://www.googleapis.com/auth/drive.file'];
+            
+            const redirectUri = 'http://localhost';
+            
+            // Generate state parameter for security
+            const state = Math.random().toString(36).substring(2, 15);
+            
+            // Build OAuth URL
+            const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+            authUrl.searchParams.set('client_id', clientId);
+            authUrl.searchParams.set('redirect_uri', redirectUri);
+            authUrl.searchParams.set('response_type', 'code');
+            authUrl.searchParams.set('scope', scopes.join(' '));
+            authUrl.searchParams.set('state', state);
+            authUrl.searchParams.set('access_type', 'offline');
+            authUrl.searchParams.set('prompt', 'consent');
+            
+            // Store state for verification
+            sessionStorage.setItem('oauth_state', state);
+            sessionStorage.setItem('oauth_account_type', accountType);
+            
+            // Update status
+            document.getElementById('authStatus').innerHTML = 
+                `<p>🔗 <a href="${authUrl.toString()}" target="_blank">Click here to authenticate with Google</a></p>
+                 <p>After authentication, you'll be redirected to localhost. Copy the full URL from your browser and paste it below:</p>
+                 <input type="text" id="authUrl" placeholder="Paste the full URL from localhost here...">
+                 <button class="button" onclick="extractCodeAndExchange()">Extract Code & Generate Token</button>`;
+        }
+
+        function extractCodeAndExchange() {
+            const authUrl = document.getElementById('authUrl').value.trim();
+            
+            if (!authUrl) {
+                alert('Please paste the full URL from localhost first!');
+                return;
+            }
+
+            try {
+                // Parse the URL
+                const url = new URL(authUrl);
+                
+                // Extract authorization code
+                const code = url.searchParams.get('code');
+                const state = url.searchParams.get('state');
+                
+                if (!code) {
+                    throw new Error('Authorization code not found in URL');
+                }
+
+                // Verify state parameter
+                const storedState = sessionStorage.getItem('oauth_state');
+                if (state !== storedState) {
+                    throw new Error('Invalid state parameter. Please try the authentication flow again.');
+                }
+
+                // Exchange the code for tokens
+                exchangeCodeForToken(code);
+                
+            } catch (error) {
+                alert('Error extracting authorization code: ' + error.message);
+            }
+        }
+
+        function exchangeCodeForToken(authCode) {
+            const clientId = sessionStorage.getItem('oauth_client_id');
+            const clientSecret = sessionStorage.getItem('oauth_client_secret');
+            const accountType = sessionStorage.getItem('oauth_account_type');
+            
+            if (!authCode) {
+                alert('Authorization code is missing!');
+                return;
+            }
+
+            console.log('Starting token exchange...');
+            console.log('Client ID:', clientId);
+            console.log('Client Secret:', clientSecret ? 'Present' : 'Missing');
+            console.log('Account Type:', accountType);
+            console.log('Auth Code:', authCode.substring(0, 10) + '...');
+
+            // Exchange authorization code for tokens
+            const tokenUrl = 'https://oauth2.googleapis.com/token';
+            const tokenData = {
+                client_id: clientId,
+                client_secret: clientSecret,
+                code: authCode,
+                grant_type: 'authorization_code',
+                redirect_uri: 'http://localhost'
+            };
+
+            console.log('Token data being sent:', JSON.stringify(tokenData, null, 2));
+            console.log('URLSearchParams body:', new URLSearchParams(tokenData).toString());
+
+            fetch(tokenUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(tokenData)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', JSON.stringify(data, null, 2));
+                if (data.error) {
+                    throw new Error(data.error_description || data.error);
+                }
+                displayToken(data, accountType);
+            })
+            .catch(error => {
+                console.error('Token exchange error:', error);
+                document.getElementById('tokenResult').className = 'result error';
+                document.getElementById('tokenResult').style.display = 'block';
+                document.getElementById('tokenResult').innerHTML = 
+                    `<h4>❌ Error Generating Token</h4>
+                     <p><strong>Error:</strong> ${error.message}</p>
+                     <p>Please try again or check your OAuth client configuration.</p>
+                     <p><strong>Common solutions:</strong></p>
+                     <ul>
+                         <li>Ensure your OAuth client is set to "Desktop application" type</li>
+                         <li>Check that your client ID is correct</li>
+                         <li>Make sure you're using the correct authorization code</li>
+                         <li>Try the authentication flow again</li>
+                     </ul>`;
+            });
+        }
+
+        function displayToken(tokenData, accountType) {
+            const resultDiv = document.getElementById('tokenResult');
+            resultDiv.className = 'result';
+            resultDiv.style.display = 'block';
+            
+            // Determine filename
+            let fileName = '';
+            if (accountType === 'sheets') {
+                fileName = 'sheets-token.json';
+            } else if (accountType === 'upload') {
+                fileName = `account${batchNumber}-token.json`;
+                batchNumber++;
+            }
+            
+            // Create token object
+            const tokenObject = {
+                access_token: tokenData.access_token,
+                refresh_token: tokenData.refresh_token,
+                scope: tokenData.scope,
+                token_type: tokenData.token_type,
+                expiry_date: tokenData.expires_in ? Date.now() + (tokenData.expires_in * 1000) : null
+            };
+            
+            // Display results
+            document.getElementById('accountType').textContent = accountType;
+            document.getElementById('accessToken').textContent = tokenData.access_token;
+            document.getElementById('refreshToken').textContent = tokenData.refresh_token || 'No refresh token provided';
+            document.getElementById('expiresAt').textContent = tokenData.expires_in ? 
+                new Date(Date.now() + (tokenData.expires_in * 1000)).toLocaleString() : 'No expiration';
+            document.getElementById('tokenType').textContent = tokenData.token_type;
+            document.getElementById('scope').textContent = tokenData.scope;
+            document.getElementById('fileName').textContent = fileName;
+            
+            // Add copy button
+            const copyButton = document.createElement('button');
+            copyButton.className = 'button';
+            copyButton.textContent = '📋 Copy Token JSON';
+            copyButton.onclick = () => {
+                navigator.clipboard.writeText(JSON.stringify(tokenObject, null, 2));
+                copyButton.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    copyButton.textContent = '📋 Copy Token JSON';
+                }, 2000);
+            };
+            resultDiv.appendChild(copyButton);
+        }
+
+        // Check if we're returning from OAuth (URL contains code parameter)
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            
+            if (code && state) {
+                // Verify state parameter
+                const storedState = sessionStorage.getItem('oauth_state');
+                if (state === storedState) {
+                    document.getElementById('authUrl').value = window.location.href;
+                    extractCodeAndExchange();
+                } else {
+                    alert('Invalid state parameter. Please try again.');
+                }
+            }
+        };
+    </script>
+</body>
+</html> 
